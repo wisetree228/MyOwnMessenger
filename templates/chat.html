@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat</title>
+    <style>
+        /* Стили для страницы */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Стили для верхнего меню */
+        .top-menu {
+            background-color: #333;
+            overflow: hidden;
+        }
+
+        .top-menu a {
+            float: left;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        .top-menu a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        /* Стили для основной части */
+        .main-content {
+            padding: 20px;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+            overflow-y: auto;
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .chat-message {
+            max-width: 60%;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 15px;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .other-message {
+            align-self: flex-start;
+            background-color: white;
+            color: #333;
+        }
+
+        .new-message-form {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .new-message-form input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px 0 0 5px;
+        }
+
+        .new-message-form button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .new-message-form button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-menu">
+        <a href="{{url_for('index')}}">Main page</a>
+        <a href="#">Profile</a>
+        {% if not session.userName %}
+        <a href="{{url_for('login')}}">Login</a>
+        {% else %}
+        <a href="{{url_for('logout')}}">Logout</a>
+        {% endif %}
+    </div>
+    <div class="main-content">
+        <div class="chat-container">
+            <div class="chat-message user-message">
+                Привет, как дела?
+            </div>
+            <div class="chat-message other-message">
+                Здравствуйте! Все хорошо, спасибо за вопрос.
+            </div>
+            <div class="chat-message user-message">
+                Отлично, я рад это слышать. У меня тоже все в порядке.
+            </div>
+            <div class="chat-message other-message">
+                Это замечательно! Как ваши планы на сегодня?
+            </div>
+        </div>
+        <form class="new-message-form">
+            <input type="text" placeholder="Type your message...">
+            <button type="submit">Send</button>
+        </form>
+    </div>
+</body>
+</html>
