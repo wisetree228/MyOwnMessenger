@@ -94,6 +94,22 @@
         .main-content a.login-button:hover {
             background-color: #45a049;
         }
+        .newchat{
+            text-decoration: none;
+            border-radius: 10px;
+            display: inline-block;
+            width: 20%;
+            margin-left: 40%;
+            background-color:  #4CAF50;
+            height: 40px;
+            font-size: large;
+            color: white;
+            text-align: center;
+            padding-top: 15px;
+        }
+        .newchat:hover{
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
@@ -126,13 +142,9 @@
                 <div class="chat-name"><a href="{{url_for('chat', username=chat[0])}}">{{chat[0]}}</a></div>
             </div>
             {% endfor %}
-<!--            <div class="chat-box">-->
-<!--                <div class="chat-avatar">-->
-<!--                    <img src="avatar2.jpg" alt="Avatar">-->
-<!--                </div>-->
-<!--                <div class="chat-name"><a href="#">Пользователь 2</a></div>-->
-<!--            </div>-->
+            
         </div>
+        <a href="{{url_for('newchat')}}" class="newchat">New chat</a>
     </div>
 
 

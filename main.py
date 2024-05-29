@@ -89,10 +89,10 @@ def index():
     if 'userName' in session:
         chats = executeAll(f"SELECT * FROM chats WHERE user1='{session['userName']}' OR user2='{session['userName']}'")
         for i in chats:
-            if i[1]==session['userName']:
-                links.append([i[2]])
-            else:
+            if i[0]==session['userName']:
                 links.append([i[1]])
+            else:
+                links.append([i[0]])
 
 
 
@@ -135,6 +135,7 @@ def reg():
             flash("The length of the login and password is at least 5 characters, it is forbidden to use ' in order to protect against sql injections!")
     return render_template('reg.html')
 
+
 @app.route('/logout')
 def logout():
     session.pop('userName', None)
@@ -161,13 +162,24 @@ def newchat():
 
 @app.route('/chat/<username>', methods=['POST', 'GET'])
 def chat(username):
-    if not(checkId(f"SELECT * FROM chats WHERE user1='{session['userName']}' AND user2='{username}';") or checkId(f"SELECT * FROM chats WHERE user2='{session['userName']}' AND user1='{username}';")):
-        return redirect('error')
     if not 'userName' in session:
         return redirect(url_for('index'))
+    if not(checkId(f"SELECT * FROM chats WHERE user1='{session['userName']}' AND user2='{username}';") or checkId(f"SELECT * FROM chats WHERE user2='{session['userName']}' AND user1='{username}';")):
+        return redirect('error')
+
     if username==session['userName']:
         return redirect('/error')
-    return render_template('chat.html')
+
+    if request.method=='POST':
+        text=request.form['text']
+        if "'" in text:
+            flash("don't use ' for SQL injections!")
+        else:
+            execute(f"INSERT INTO mess (text, auth, get) VALUES ('{text}', '{session['userName']}', '{username}');")
+
+    mess=executeAll(f"SELECT * FROM mess WHERE (auth='{session['userName']}' AND get='{username}') OR (auth='{username}' AND get='{session['userName']}')")
+
+    return render_template('chat.html', mess=mess)
 
 
 
@@ -176,6 +188,10 @@ def chat(username):
 @app.errorhandler(404)  # обработчик неверного URL
 def pagenotfound(error):
     return render_template('error.html')
+
+
+
+
 
 
 

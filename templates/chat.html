@@ -90,6 +90,15 @@
         .new-message-form button:hover {
             background-color: #45a049;
         }
+        .error{
+          text-decoration: none;
+          background-color: rgb(255, 60, 0);
+          color: white;
+          border-radius: 5px;
+          margin-top: 10px;
+          padding: 10px;
+          display: inline;
+        }
     </style>
 </head>
 <body>
@@ -104,22 +113,24 @@
     </div>
     <div class="main-content">
         <div class="chat-container">
+            {% for i in mess %}
+            {% if i[1]==session.userName %}
             <div class="chat-message user-message">
-                Привет, как дела?
+                {{i[0]}}
             </div>
+            {% else %}
             <div class="chat-message other-message">
-                Здравствуйте! Все хорошо, спасибо за вопрос.
+                {{i[0]}}
             </div>
-            <div class="chat-message user-message">
-                Отлично, я рад это слышать. У меня тоже все в порядке.
-            </div>
-            <div class="chat-message other-message">
-                Это замечательно! Как ваши планы на сегодня?
-            </div>
+            {% endif %}
+            {% endfor %}
         </div>
-        <form class="new-message-form">
-            <input type="text" placeholder="Type your message...">
+        <form class="new-message-form" method="post">
+            <input type="text" placeholder="Type your message..." name="text">
             <button type="submit">Send</button>
+            {% for i in get_flashed_messages() %}
+            <div class="error">{{i}}</div>
+            {% endfor %}
         </form>
     </div>
 </body>
