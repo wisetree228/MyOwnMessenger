@@ -91,7 +91,7 @@
 <body>
     <div class="top-menu">
         <a href="{{url_for('index')}}">Main page</a>
-        <a href="#">Profile</a>
+        <a href="{{url_for('profile')}}">Profile</a>
         {% if not session.userName %}
         <a href="{{url_for('login')}}">Login</a>
         {% else %}

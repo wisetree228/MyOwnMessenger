@@ -115,7 +115,7 @@
 <body>
     <div class="top-menu">
         <a href="{{url_for('index')}}">Main page</a>
-        <a href="#">Profile</a>
+        <a href="{{url_for('profile')}}">Profile</a>
         <a href="{{url_for('newchat')}}">Newchat</a>
         {% if not session.userName %}
         <a href="{{url_for('login')}}">Login</a>
@@ -137,7 +137,11 @@
             {% for chat in links %}
             <div class="chat-box">
                 <div class="chat-avatar">
-                    <img src="avatar1.jpg" alt="Avatar">
+                    {% if chat[1] %}
+                    <img src="{{url_for('get_image', name=chat[0])}}" alt="Avatar">
+                    {% else %}
+                    <img src="{{url_for('static', filename='photo.jpg')}}" alt="Avatar">
+                    {% endif %}
                 </div>
                 <div class="chat-name"><a href="{{url_for('chat', username=chat[0])}}">{{chat[0]}}</a></div>
             </div>
