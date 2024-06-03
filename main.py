@@ -1,8 +1,8 @@
 from flask import Flask, render_template, url_for, request, flash, get_flashed_messages, redirect, session, send_file, make_response, session
 import psycopg2
-import base64
 from werkzeug.utils import secure_filename
 from io import BytesIO
+import random
 
 def execute(query):
     try:
@@ -98,6 +98,17 @@ def setimg(query, file):
     except Exception as e:
         print('Ошибка:', e)
 
+def getRandomKey():
+    l = 'qwertyuioplkjhgfdsazxcvbnm1234567890'
+    s = ''
+    for i in range(10):
+        s += random.choice(l)
+    return s
+
+
+
+
+
 
 
 
@@ -184,12 +195,35 @@ def newchat():
                 flash("that user doesn't exist!")
             elif checkId(f"SELECT * FROM chats WHERE user1='{session['userName']}' AND user2='{name}';") or checkId(f"SELECT * FROM chats WHERE user2='{session['userName']}' AND user1='{name}';"):
                 flash("you already have a chat with this user!")
+            elif name==session['userName']:
+                flash("You can't have a chat with yourself!")
             else:
                 execute(f"INSERT INTO chats (user1, user2) VALUES ('{session['userName']}', '{name}');")
                 return redirect(url_for('chat', username=name))
         else:
             flash("don't use ' for SQL injections!")
     return render_template('newchat.html')
+
+
+@app.route('/get_img/<k>')
+def get_img(k):
+    # Получение изображения из базы данных
+    image_data = executeOne(f"SELECT img FROM images WHERE key='{k}';")[0]
+
+    if image_data:
+        # Возвращение изображения в ответе Flask
+        return send_file(
+            BytesIO(image_data),
+            mimetype='image/png'
+        )
+    else:
+        image_data = executeOne(f"SELECT img FROM users WHERE username='empty';")[0]
+        return send_file(
+            BytesIO(image_data),
+            mimetype='image/png'
+        )
+
+
 
 @app.route('/chat/<username>', methods=['POST', 'GET'])
 def chat(username):
@@ -203,14 +237,23 @@ def chat(username):
 
     if request.method=='POST':
         text=request.form['text']
-        if "'" in text:
-            flash("don't use ' for SQL injections!")
-        else:
-            execute(f"INSERT INTO mess (text, auth, get) VALUES ('{text}', '{session['userName']}', '{username}');")
+        if text!='':
+            if "'" in text:
+                flash("don't use ' for SQL injections!")
+            else:
+                execute(f"INSERT INTO mess (text, auth, get) VALUES ('{text}', '{session['userName']}', '{username}');")
+
+        elif 'image' in request.files:
+            image = request.files['image']
+            filename = secure_filename(image.filename)
+            image_data = image.read()
+            key=getRandomKey()
+            execute(f"INSERT INTO mess (auth, get, key) VALUES ('{session['userName']}', '{username}', '{key}');")
+            setimg(f"INSERT INTO images (key, img) VALUES ('{key}', (%s))", image_data)
 
     mess=executeAll(f"SELECT * FROM mess WHERE (auth='{session['userName']}' AND get='{username}') OR (auth='{username}' AND get='{session['userName']}')")
 
-    return render_template('chat.html', mess=mess)
+    return render_template('chat.html', mess=mess, username=username)
 
 
 
@@ -263,6 +306,7 @@ def get_image(name):
 
 
 
+
 @app.route('/delprof')
 def delprof():
     if not 'userName' in session:
@@ -271,10 +315,11 @@ def delprof():
     session.pop('userName', None)
     execute(f"DELETE FROM users WHERE username='{s}';")
     execute(f"DELETE FROM chats WHERE user1='{s}' OR user2='{s}';")
+    l=executeAll(f"SELECT key FROM mess WHERE auth='{s}' OR get='{s}';")
+    for i in l:
+        execute(f"DELETE FROM images WHERE key='{i[0]}';")
     execute(f"DELETE FROM mess WHERE auth='{s}' OR get='{s}';")
     return redirect(url_for('index'))
-
-
 
 
 

@@ -99,6 +99,32 @@
           padding: 10px;
           display: inline;
         }
+        .img{
+            padding: auto;
+            margin-top: 0.4%;
+            
+
+        }
+        .nm{
+            margin-left: 40%;
+        }
+
+        .imagee{
+            margin-top: 10px;
+            display: block;   
+            max-width: 40%;
+            margin-left: 60%;
+            border: 5px solid #4CAF50;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+
+        .img-other{
+            margin-left: 1%;
+            border: 5px solid #91a791;
+        }
+        
     </style>
 </head>
 <body>
@@ -112,22 +138,36 @@
         <a href="{{url_for('logout')}}">Logout</a>
         {% endif %}
     </div>
+    <h1 class="nm">{{username}}</h1>
     <div class="main-content">
         <div class="chat-container">
             {% for i in mess %}
             {% if i[1]==session.userName %}
+            
+            {% if i[0] %}
             <div class="chat-message user-message">
                 {{i[0]}}
             </div>
             {% else %}
+            <img src="{{url_for('get_img', k=i[3])}}" alt="" class="imagee">
+            {% endif %}
+            
+            {% else %}
+
+            {% if i[0] %}
             <div class="chat-message other-message">
                 {{i[0]}}
             </div>
+            {% else %}
+            <img src="{{url_for('get_img', k=i[3])}}" alt="" class="imagee img-other">
+            {% endif %}
+
             {% endif %}
             {% endfor %}
         </div>
-        <form class="new-message-form" method="post">
+        <form class="new-message-form" method="post" enctype="multipart/form-data">
             <input type="text" placeholder="Type your message..." name="text">
+            <input type="file" name="image" class="img">
             <button type="submit">Send</button>
             {% for i in get_flashed_messages() %}
             <div class="error">{{i}}</div>
