@@ -349,7 +349,24 @@ def gochat(name):
         return redirect(url_for('chat', username=name))
 
 
+@app.route('/delmes/<text>/<auth>/<get>')
+def delmes(text, auth, get):
+    if not 'userName' in session:
+        return redirect(url_for('index'))
+    elif session['userName']!=auth:
+        return redirect(url_for('index'))
+    execute(f"DELETE FROM mess WHERE text='{text}' AND auth='{auth}' AND get='{get}';")
+    return redirect(url_for('chat', username=get))
 
+@app.route('/delimg/<auth>/<get>/<key>')
+def delimg(auth, get, key):
+    if not 'userName' in session:
+        return redirect(url_for('index'))
+    elif session['userName'] != auth:
+        return redirect(url_for('index'))
+    execute(f"DELETE FROM mess WHERE auth='{auth}' AND get='{get}' AND key='{key}';")
+    execute(f"DELETE FROM images WHERE key='{key}';")
+    return redirect(url_for('chat', username=get))
 
 
 

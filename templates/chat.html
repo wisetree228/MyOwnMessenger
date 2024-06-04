@@ -47,7 +47,7 @@
         .chat-message {
             max-width: 60%;
             padding: 10px 15px;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
             border-radius: 15px;
         }
 
@@ -139,6 +139,19 @@
             color: #4CAF50;
             background-color: #fff;    
         }
+        .delmes{
+            margin-left: 96%;
+            margin-bottom: 20px;
+            text-decoration: none;
+            color: #fff;
+            background-color: red;
+            border-radius: 3px;
+            text-align: center;
+        }
+        .delmes:hover{
+            background-color: rgb(196, 2, 2);
+        }
+        
         
     </style>
 </head>
@@ -164,8 +177,10 @@
             <div class="chat-message user-message">
                 {{i[0]}}
             </div>
+            <a href="{{url_for('delmes', text=i[0], auth=session.userName, get=username)}}" class="delmes">Delete</a>
             {% else %}
             <img src="{{url_for('get_img', k=i[3])}}" alt="" class="imagee">
+            <a href="{{url_for('delimg', auth=session.userName, get=username, key=i[3])}}" class="delmes">Delete</a>
             {% endif %}
             
             {% else %}
