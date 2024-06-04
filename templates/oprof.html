@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile</title>
+    <style>
+        /* Стили для страницы */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Стили для верхнего меню */
+        .top-menu {
+            background-color: #333;
+            overflow: hidden;
+        }
+
+        .top-menu a {
+            float: left;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        .top-menu a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        /* Стили для основной части */
+        .main-content {
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 250px;
+        }
+
+        .profile-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin-top: 50px;
+            object-fit: cover;
+        }
+
+        .change-avatar-form {
+            margin-top: 30px;
+        }
+
+        .change-avatar-form input[type="file"] {
+            margin-right: 10px;
+        }
+
+        .change-avatar-form button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .change-avatar-form button:hover {
+            background-color: #45a049;
+        }
+
+        .username {
+            font-size: 32px;
+            margin-top: 50px;
+        }
+        .chat{
+            text-decoration: none;
+            padding: 10px;
+            font-size: 20px;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            color: #ffffff;
+            margin-top: 50px;
+            /* margin-left: 20%; */
+            display: inline-block;
+            border: 2px solid #4CAF50;
+        }
+        .chat:hover{
+            background-color: #ffffff;
+            color: #4CAF50;
+        }
+        
+
+        
+        
+
+    </style>
+</head>
+<body>
+    <div class="top-menu">
+        <a href="{{url_for('index')}}">Main page</a>
+        <a href="{{url_for('profile')}}">Profile</a>
+        <a href="{{url_for('newchat')}}">Newchat</a>
+        {% if not session.userName %}
+        <a href="{{url_for('login')}}">Login</a>
+        {% else %}
+        <a href="{{url_for('logout')}}">Logout</a>
+        {% endif %}
+    </div>
+    <div class="main-content">
+        {% if img %}
+        <img class="profile-avatar" src="{{ url_for('get_image', name=username) }}" alt="Profile Avatar">
+        {% else %}
+        <img class="profile-avatar" src="{{ url_for('static', filename='photo.jpg') }}" alt="Profile Avatar">
+        {% endif %}
+
+        <div class="username">{{ username }}</div>
+        <a href="{{url_for('gochat', name=username)}}" class="chat">Chat with that user</a>
+        
+    </div>
+
+    
+</body>
+</html>

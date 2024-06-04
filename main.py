@@ -2,7 +2,7 @@ from flask import Flask, render_template, url_for, request, flash, get_flashed_m
 import psycopg2
 from werkzeug.utils import secure_filename
 from io import BytesIO
-import random
+from random import choice
 
 def execute(query):
     try:
@@ -102,7 +102,7 @@ def getRandomKey():
     l = 'qwertyuioplkjhgfdsazxcvbnm1234567890'
     s = ''
     for i in range(10):
-        s += random.choice(l)
+        s += choice(l)
     return s
 
 
@@ -320,6 +320,37 @@ def delprof():
         execute(f"DELETE FROM images WHERE key='{i[0]}';")
     execute(f"DELETE FROM mess WHERE auth='{s}' OR get='{s}';")
     return redirect(url_for('index'))
+
+
+
+@app.route('/otherprof/<username>')
+def oprof(username):
+    if not checkId(f"SELECT * FROM users WHERE username='{username}';"):
+        return redirect(url_for('index'))
+    if username==session['userName']:
+        return redirect(url_for('profile'))
+
+    imgd = executeOne(f"SELECT img FROM users WHERE username='{username}';")[0]
+
+    if imgd:
+        # img_data_base64 = base64.b64encode(imgd).decode('utf-8')
+        return render_template('oprof.html', username=username, img=imgd, session=session)
+    return render_template('oprof.html', username=username, img=False, session=session)
+
+@app.route('/gochat/<name>')
+def gochat(name):
+    if not 'userName' in session:
+        return redirect(url_for('login'))
+
+    if checkId(f"SELECT * FROM chats WHERE (user1='{name}' and user2='{session['userName']}') OR (user1='{session['userName']}' and user2='{name}');"):
+        return redirect(url_for('chat', username=name))
+    else:
+        execute(f"INSERT INTO chats (user1, user2) VALUES ('{session['userName']}', '{name}');")
+        return redirect(url_for('chat', username=name))
+
+
+
+
 
 
 
