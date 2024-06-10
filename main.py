@@ -109,17 +109,17 @@ def getRandomKey():
 
 
 
-
-
-
 app=Flask(__name__)
 app.secret_key='key123456789'
+
+
+
 
 @app.route('/')
 def index():
 
     links=[]
-
+    groups=[]
     if 'userName' in session:
         chats = executeAll(f"SELECT * FROM chats WHERE user1='{session['userName']}' OR user2='{session['userName']}'")
         for i in chats:
@@ -135,10 +135,15 @@ def index():
                     links.append([i[0], 1])
                 else:
                     links.append([i[0], 0])
+        gr=executeAll(f"SELECT * FROM groups;")
+
+        for i in gr:
+            if i[1]==session['userName'] or session['userName'] in i[2]:
+                groups.append(i[0])
 
 
 
-    return render_template('index.html', session=session, links=links)
+    return render_template('index.html', session=session, links=links, groups=groups)
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
@@ -286,6 +291,10 @@ def profile():
         return render_template('prof.html', session=session, img=imgd)
     return render_template('prof.html', session=session, img=False)
 
+
+
+
+
 @app.route('/get-image/<name>')
 def get_image(name):
     # Получение изображения из базы данных
@@ -337,6 +346,95 @@ def oprof(username):
         return render_template('oprof.html', username=username, img=imgd, session=session)
     return render_template('oprof.html', username=username, img=False, session=session)
 
+
+
+
+@app.route('/newgroup', methods=['POST', 'GET'])
+def newgroup():
+    if not 'userName' in session:
+        return redirect(url_for('login'))
+    if request.method=='POST':
+        name=request.form['group-name']
+        if "'" in name or len(name)<3:
+            flash("minimum name length is 3 characters, it is forbidden to use ' for SQL injections")
+        else:
+            if checkId(f"SELECT * FROM groups WHERE name='{name}';") or checkId(f"SELECT * FROM users WHERE username='{name}';"):
+                flash('a group with this name already exists')
+            else:
+                execute(f"INSERT INTO groups (name, admin, members) VALUES ('{name}', '{session['userName']}', '_');")
+                return redirect(url_for('group', gname=name))
+
+    return render_template('newgroup.html')
+
+
+
+
+@app.route('/group/<gname>', methods=['POST', 'GET'])
+def group(gname):
+    if not 'userName' in session:
+        return redirect(url_for('login'))
+    if not checkId(f"SELECT * FROM groups WHERE name='{gname}';"):
+        return redirect(url_for('index'))
+    memb = executeOne(f"SELECT members FROM groups WHERE name='{gname}';")[0]
+    adm=executeOne(f"SELECT admin FROM groups WHERE name='{gname}';")[0]
+    if not (session['userName'] in memb) and adm!=session['userName']:
+        return redirect(url_for('index'))
+
+
+
+    if request.method=='POST':
+        text = request.form['text']
+        if text != '':
+            if "'" in text:
+                flash("don't use ' for SQL injections!")
+            else:
+                execute(f"INSERT INTO mess (text, auth, get) VALUES ('{text}', '{session['userName']}', '{gname}');")
+
+        elif 'image' in request.files:
+            image = request.files['image']
+            filename = secure_filename(image.filename)
+            image_data = image.read()
+            key = getRandomKey()
+            execute(f"INSERT INTO mess (auth, get, key) VALUES ('{session['userName']}', '{gname}', '{key}');")
+            setimg(f"INSERT INTO images (key, img) VALUES ('{key}', (%s))", image_data)
+
+    adm=executeOne(f"SELECT admin FROM groups WHERE name='{gname}';")[0]
+    mess=executeAll(f"SELECT * FROM mess WHERE get='{gname}';")
+    return render_template('group.html', mess=mess, username=gname, admin=adm)
+
+
+
+@app.route('/adduser/<gname>',  methods=['POST', 'GET'])
+def adduser(gname):
+    if not 'userName' in session:
+        return redirect(url_for('login'))
+    if not checkId(f"SELECT * FROM groups WHERE name='{gname}';"):
+        return redirect(url_for('index'))
+    adm=executeOne(f"SELECT admin FROM groups WHERE name='{gname}';")[0]
+    if adm!=session['userName']:
+        return redirect(url_for('index'))
+    if not (checkId(f"SELECT * FROM groups WHERE name='{gname}';") or checkId(f"SELECT * FROM users WHERE username='{gname}';")):
+        return redirect(url_for('index'))
+    if request.method=='POST':
+        if not "'" in request.form['group-name']:
+            memb=executeOne(f"SELECT members FROM groups WHERE name='{gname}';")[0]
+            name = request.form['group-name']
+            if not checkId(f"SELECT * FROM users WHERE username='{name}';"):
+                flash("that user doesn't exist!")
+            elif name in memb or name==executeOne(f"SELECT admin FROM groups WHERE name='{gname}';")[0]:
+                flash("that user is already in group")
+            else:
+                memb+=f'_{name}'
+                execute(f"UPDATE groups SET members='{memb}' WHERE name='{gname}';")
+                return redirect(url_for('group', gname=gname))
+        else:
+            flash("don't use ' for SQL injections!")
+    return render_template('adduser.html')
+
+
+
+
+
 @app.route('/gochat/<name>')
 def gochat(name):
     if not 'userName' in session:
@@ -356,7 +454,13 @@ def delmes(text, auth, get):
     elif session['userName']!=auth:
         return redirect(url_for('index'))
     execute(f"DELETE FROM mess WHERE text='{text}' AND auth='{auth}' AND get='{get}';")
-    return redirect(url_for('chat', username=get))
+    if checkId(f"SELECT * FROM users WHERE username='{get}';"):
+        return redirect(url_for('chat', username=get))
+    else:
+        return redirect(url_for('group', gname=get))
+
+
+
 
 @app.route('/delimg/<auth>/<get>/<key>')
 def delimg(auth, get, key):
@@ -366,7 +470,60 @@ def delimg(auth, get, key):
         return redirect(url_for('index'))
     execute(f"DELETE FROM mess WHERE auth='{auth}' AND get='{get}' AND key='{key}';")
     execute(f"DELETE FROM images WHERE key='{key}';")
-    return redirect(url_for('chat', username=get))
+    if checkId(f"SELECT * FROM users WHERE username='{get}';"):
+        return redirect(url_for('chat', username=get))
+    else:
+        return redirect(url_for('group', gname=get))
+
+
+
+
+
+@app.route('/delus/<gname>',  methods=['POST', 'GET'])
+def delus(gname):
+    if not 'userName' in session:
+        return redirect(url_for('login'))
+    if not checkId(f"SELECT * FROM groups WHERE name='{gname}';"):
+        return redirect(url_for('index'))
+    adm=executeOne(f"SELECT admin FROM groups WHERE name='{gname}';")[0]
+    if adm!=session['userName']:
+        return redirect(url_for('index'))
+    if request.method=='POST':
+        if "'" in request.form['group-name']:
+            flash("don't use ' for SQL injections!")
+        else:
+            memb = executeOne(f"SELECT members FROM groups WHERE name='{gname}';")[0]
+            if not(request.form['group-name'] in memb):
+                flash("that user isn't in this group or he is the admin!")
+            else:
+                s='_'+request.form['group-name']
+                memb=memb.replace(s, '')
+                execute(f"UPDATE groups SET members='{memb}' WHERE name='{gname}';")
+                return redirect(url_for('group', gname=gname))
+
+    return render_template('delus.html')
+
+
+
+
+@app.route('/delgroup/<gname>',  methods=['POST', 'GET'])
+def delgroup(gname):
+    if not 'userName' in session:
+        return redirect(url_for('login'))
+    if not checkId(f"SELECT * FROM groups WHERE name='{gname}';"):
+        return redirect(url_for('index'))
+    adm = executeOne(f"SELECT admin FROM groups WHERE name='{gname}';")[0]
+    if adm!=session['userName']:
+        return redirect(url_for('group', gname=gname))
+
+    mss=executeAll(f"SELECT * FROM mess WHERE get='{gname}';")
+    execute(f"DELETE FROM mess WHERE get='{gname}';")
+    for i in mss:
+        if i[3]:
+            execute(f"DELETE FROM images WHERE key='{i[3]}';")
+    execute(f"DELETE FROM groups WHERE name='{gname}';")
+    return redirect(url_for('index'))
+
 
 
 

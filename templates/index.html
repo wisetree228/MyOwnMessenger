@@ -106,6 +106,8 @@
             color: white;
             text-align: center;
             padding-top: 15px;
+            margin-bottom: 30px;
+            margin-top: 20px;
         }
         .newchat:hover{
             background-color: #45a049;
@@ -148,7 +150,25 @@
             {% endfor %}
             
         </div>
-        <a href="{{url_for('newchat')}}" class="newchat">New chat</a>
+        <a href="{{url_for('newchat')}}" class="newchat">New chat</a><br>
+        <h1>Groups</h1>
+
+        <div class="chat-container">
+        {% for gr in groups %}
+            <div class="chat-box">
+                <div class="chat-avatar">
+
+                    <img src="{{url_for('static', filename='photo.jpg')}}" alt="Avatar">
+
+                </div>
+                <div class="chat-name"><a href="{{url_for('group', gname=gr)}}">{{gr}}</a></div>
+            </div>
+            {% endfor %}
+
+         </div>
+
+
+        <a href="{{url_for('newgroup')}}" class="newchat">New group</a>
     </div>
 
 

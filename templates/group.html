@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat</title>
+    <style>
+        /* Стили для страницы */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Стили для верхнего меню */
+        .top-menu {
+            background-color: #333;
+            overflow: hidden;
+        }
+
+        .top-menu a {
+            float: left;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        .top-menu a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        /* Стили для основной части */
+        .main-content {
+            padding: 20px;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 700px;
+            overflow-y: auto;
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .chat-message {
+            max-width: 60%;
+            padding: 10px 15px;
+            margin-bottom: 4px;
+            border-radius: 15px;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .other-message {
+            align-self: flex-start;
+            background-color: white;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .new-message-form {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .new-message-form input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px 0 0 5px;
+        }
+
+        .new-message-form button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .new-message-form button:hover {
+            background-color: #45a049;
+        }
+        .error{
+          text-decoration: none;
+          background-color: rgb(255, 60, 0);
+          color: white;
+          border-radius: 5px;
+          margin-top: 10px;
+          padding: 10px;
+          display: inline;
+        }
+        .img{
+            padding: auto;
+            margin-top: 0.4%;
+
+
+        }
+        .nm{
+            margin-left: 40%;
+        }
+
+        .imagee{
+            margin-top: 10px;
+            display: block;
+            max-width: 40%;
+            margin-left: 60%;
+            border: 5px solid #4CAF50;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+
+        .img-other{
+            margin-left: 1%;
+            border: 5px solid #ffffff;
+        }
+
+        .otherprof{
+            text-decoration: none;
+            margin-left: 25%;
+            font-size: 20px;
+            padding: 10px;
+            color: #fff;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            border: 2px solid #4CAF50;
+        }
+        .otherprof:hover{
+            color: #4CAF50;
+            background-color: #fff;
+        }
+        .delmes{
+            margin-left: 96%;
+            margin-bottom: 20px;
+            text-decoration: none;
+            color: #fff;
+            background-color: red;
+            border-radius: 3px;
+            text-align: center;
+        }
+        .delmes:hover{
+            background-color: rgb(196, 2, 2);
+        }
+        .auth{
+            color: #45a049;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="top-menu">
+        <a href="{{url_for('index')}}">Main page</a>
+        <a href="{{url_for('profile')}}">Profile</a>
+        <a href="{{url_for('newchat')}}">Newchat</a>
+        {% if not session.userName %}
+        <a href="{{url_for('login')}}">Login</a>
+        {% else %}
+        <a href="{{url_for('logout')}}">Logout</a>
+        {% endif %}
+    </div>
+    <h1 class="nm">{{username}}</h1>
+    {% if admin==session.userName %}
+    <a href="{{url_for('delus', gname=username)}}" class="otherprof">Delete user</a>
+    <a href="{{url_for('adduser', gname=username)}}" class="otherprof">Add user</a>
+    <a href="{{url_for('delgroup', gname=username)}}" class="otherprof">Delete group</a>
+    {% endif %}
+    <div class="main-content">
+        <div class="chat-container">
+            {% for i in mess %}
+            {% if i[1]==session.userName %}
+
+            {% if i[0] %}
+
+            <div class="chat-message user-message">
+                {{i[0]}}
+            </div>
+            <a href="{{url_for('delmes', text=i[0], auth=session.userName, get=username)}}" class="delmes">Delete</a>
+            {% else %}
+            <img src="{{url_for('get_img', k=i[3])}}" alt="" class="imagee">
+            <a href="{{url_for('delimg', auth=session.userName, get=username, key=i[3])}}" class="delmes">Delete</a>
+            {% endif %}
+
+            {% else %}
+
+            {% if i[0] %}
+            <img src="" alt="" class="av">
+            <p class="auth">{{i[1]}}</p>
+            <div class="chat-message other-message">
+                {{i[0]}}
+            </div>
+            {% else %}
+            <img src="" alt="" class="av">
+            <p class="auth">{{i[1]}}</p>
+            <img src="{{url_for('get_img', k=i[3])}}" alt="" class="imagee img-other">
+            {% endif %}
+
+            {% endif %}
+            {% endfor %}
+        </div>
+        <form class="new-message-form" method="post" enctype="multipart/form-data">
+            <input type="text" placeholder="Type your message..." name="text">
+            <input type="file" name="image" class="img">
+            <button type="submit">Send</button>
+            {% for i in get_flashed_messages() %}
+            <div class="error">{{i}}</div>
+            {% endfor %}
+        </form>
+    </div>
+</body>
+</html>

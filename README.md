@@ -9,4 +9,7 @@ update: page for watching on other users' profiles is added
 update: messages deleting is added!
 
 
+update: groups are added!
+
+
 Project is being developed.
