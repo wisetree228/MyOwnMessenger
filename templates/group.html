@@ -128,13 +128,14 @@
 
         .otherprof{
             text-decoration: none;
-            margin-left: 25%;
+            margin-left: 20%;
             font-size: 20px;
             padding: 10px;
             color: #fff;
             background-color: #4CAF50;
             border-radius: 5px;
             border: 2px solid #4CAF50;
+            text-decoration: none;
         }
         .otherprof:hover{
             color: #4CAF50;
@@ -154,6 +155,15 @@
         }
         .auth{
             color: #45a049;
+            text-decoration: none;
+            display: block;
+            width: 5%;
+            padding: 3px;
+            /* text-align: center; */
+        }
+        .auth:hover{
+            background-color: #4CAF50;
+            color: #fff;
         }
 
 
@@ -196,13 +206,13 @@
 
             {% if i[0] %}
             <img src="" alt="" class="av">
-            <p class="auth">{{i[1]}}</p>
+            <a class="auth" href="{{url_for('oprof', username=i[1])}}">{{i[1]}}</a>
             <div class="chat-message other-message">
                 {{i[0]}}
             </div>
             {% else %}
             <img src="" alt="" class="av">
-            <p class="auth">{{i[1]}}</p>
+            <a class="auth" href="{{url_for('oprof', username=i[1])}}">{{i[1]}}</a>
             <img src="{{url_for('get_img', k=i[3])}}" alt="" class="imagee img-other">
             {% endif %}
 
