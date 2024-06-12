@@ -173,7 +173,8 @@
     <div class="top-menu">
         <a href="{{url_for('index')}}">Main page</a>
         <a href="{{url_for('profile')}}">Profile</a>
-        <a href="{{url_for('newchat')}}">Newchat</a>
+        <a href="{{url_for('newchat')}}">New chat</a>
+        <a href="{{url_for('newgroup')}}">New group</a>
         {% if not session.userName %}
         <a href="{{url_for('login')}}">Login</a>
         {% else %}

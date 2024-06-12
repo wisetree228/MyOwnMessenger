@@ -4,6 +4,8 @@ from werkzeug.utils import secure_filename
 from io import BytesIO
 from random import choice
 
+
+# functions for work with database
 def execute(query):
     try:
         con = psycopg2.connect(
@@ -98,6 +100,7 @@ def setimg(query, file):
     except Exception as e:
         print('Ошибка:', e)
 
+# random key generator
 def getRandomKey():
     l = 'qwertyuioplkjhgfdsazxcvbnm1234567890'
     s = ''
@@ -107,18 +110,58 @@ def getRandomKey():
 
 
 
-
-
 app=Flask(__name__)
 app.secret_key='key123456789'
 
 
 
+# creating tables in database if they don't exist
+execute('''
+CREATE TABLE IF NOT EXISTS chats (
+    user1 TEXT,
+    user2 TEXT
+);
+''')
 
+execute('''
+CREATE TABLE IF NOT EXISTS groups (
+    name TEXT,
+    admin TEXT,
+    members TEXT
+);
+''')
+
+execute('''
+CREATE TABLE IF NOT EXISTS images (
+    key TEXT,
+    img BYTEA
+);
+''')
+
+execute('''
+CREATE TABLE IF NOT EXISTS mess (
+    text TEXT,
+    auth TEXT,
+    get TEXT,
+    key TEXT
+);
+''')
+
+execute('''
+CREATE TABLE IF NOT EXISTS users (
+    username TEXT,
+    password TEXT,
+    img BYTEA
+);
+''')
+
+
+
+# main page handler
 @app.route('/')
 def index():
 
-    links=[]
+    links=[] # arrays of chats and groups that user have
     groups=[]
     if 'userName' in session:
         chats = executeAll(f"SELECT * FROM chats WHERE user1='{session['userName']}' OR user2='{session['userName']}'")
@@ -145,12 +188,13 @@ def index():
 
     return render_template('index.html', session=session, links=links, groups=groups)
 
+# login page handler
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     if request.method == 'POST':
         username=request.form['username']
         password=request.form['password']
-        if len(username)>=5 and len(password)>=5 and not("'" in username or "'" in password):
+        if len(username)>=5 and len(password)>=5 and not("'" in username or "'" in password): # check correct data
             if not checkId(f"SELECT * FROM users WHERE username='{username}'"):
                 flash("That account doesn't exist!")
             else:
@@ -165,6 +209,7 @@ def login():
     return render_template('login.html')
 
 
+# registration page handler
 @app.route('/register', methods=['POST', 'GET'])
 def reg():
     if request.method == 'POST':
@@ -182,13 +227,13 @@ def reg():
             flash("The length of the login and password is at least 5 characters, it is forbidden to use ' in order to protect against sql injections!")
     return render_template('reg.html')
 
-
+# logout handler
 @app.route('/logout')
 def logout():
     session.pop('userName', None)
     return redirect(url_for('index'))
 
-
+# page for create a new chat with other user
 @app.route('/newchat', methods=['POST', 'GET'])
 def newchat():
     if not 'userName' in session:
@@ -210,13 +255,14 @@ def newchat():
     return render_template('newchat.html')
 
 
+# getting image from message by key
 @app.route('/get_img/<k>')
 def get_img(k):
-    # Получение изображения из базы данных
+
     image_data = executeOne(f"SELECT img FROM images WHERE key='{k}';")[0]
 
     if image_data:
-        # Возвращение изображения в ответе Flask
+
         return send_file(
             BytesIO(image_data),
             mimetype='image/png'
@@ -229,7 +275,7 @@ def get_img(k):
         )
 
 
-
+# chat page handler
 @app.route('/chat/<username>', methods=['POST', 'GET'])
 def chat(username):
     if not 'userName' in session:
@@ -238,7 +284,7 @@ def chat(username):
         return redirect('error')
 
     if username==session['userName']:
-        return redirect('/error')
+        return redirect(url_for('index'))
 
     if request.method=='POST':
         text=request.form['text']
@@ -263,7 +309,7 @@ def chat(username):
 
 
 
-
+# profile page handler
 @app.route('/profile', methods=['POST', 'GET'])
 def profile():
     if not 'userName' in session:
@@ -287,21 +333,20 @@ def profile():
     imgd=executeOne(f"SELECT img FROM users WHERE username='{session['userName']}';")[0]
 
     if imgd:
-        #img_data_base64 = base64.b64encode(imgd).decode('utf-8')
-        return render_template('prof.html', session=session, img=imgd)
+        return render_template('prof.html', session=session, img=True)
     return render_template('prof.html', session=session, img=False)
 
 
 
 
-
+# get chat-avatar handler
 @app.route('/get-image/<name>')
 def get_image(name):
-    # Получение изображения из базы данных
+
     image_data = executeOne(f"SELECT img FROM users WHERE username='{name}';")[0]
 
     if image_data:
-        # Возвращение изображения в ответе Flask
+
         return send_file(
             BytesIO(image_data),
             mimetype='image/png'
@@ -315,7 +360,7 @@ def get_image(name):
 
 
 
-
+# profile deleting handler
 @app.route('/delprof')
 def delprof():
     if not 'userName' in session:
@@ -331,24 +376,24 @@ def delprof():
     return redirect(url_for('index'))
 
 
-
+# other user's profile page handler
 @app.route('/otherprof/<username>')
 def oprof(username):
     if not checkId(f"SELECT * FROM users WHERE username='{username}';"):
         return redirect(url_for('index'))
-    if username==session['userName']:
-        return redirect(url_for('profile'))
+    if 'userName' in session:
+        if username==session['userName']:
+            return redirect(url_for('profile'))
 
     imgd = executeOne(f"SELECT img FROM users WHERE username='{username}';")[0]
 
     if imgd:
-        # img_data_base64 = base64.b64encode(imgd).decode('utf-8')
-        return render_template('oprof.html', username=username, img=imgd, session=session)
+        return render_template('oprof.html', username=username, img=True, session=session)
     return render_template('oprof.html', username=username, img=False, session=session)
 
 
 
-
+# group creating page
 @app.route('/newgroup', methods=['POST', 'GET'])
 def newgroup():
     if not 'userName' in session:
@@ -368,7 +413,7 @@ def newgroup():
 
 
 
-
+# group chat page handler
 @app.route('/group/<gname>', methods=['POST', 'GET'])
 def group(gname):
     if not 'userName' in session:
@@ -403,7 +448,7 @@ def group(gname):
     return render_template('group.html', mess=mess, username=gname, admin=adm)
 
 
-
+# adding user to group
 @app.route('/adduser/<gname>',  methods=['POST', 'GET'])
 def adduser(gname):
     if not 'userName' in session:
@@ -413,7 +458,7 @@ def adduser(gname):
     adm=executeOne(f"SELECT admin FROM groups WHERE name='{gname}';")[0]
     if adm!=session['userName']:
         return redirect(url_for('index'))
-    if not (checkId(f"SELECT * FROM groups WHERE name='{gname}';") or checkId(f"SELECT * FROM users WHERE username='{gname}';")):
+    if not (checkId(f"SELECT * FROM groups WHERE name='{gname}';")):
         return redirect(url_for('index'))
     if request.method=='POST':
         if not "'" in request.form['group-name']:
@@ -434,7 +479,7 @@ def adduser(gname):
 
 
 
-
+# function for go to chat with other user
 @app.route('/gochat/<name>')
 def gochat(name):
     if not 'userName' in session:
@@ -447,6 +492,7 @@ def gochat(name):
         return redirect(url_for('chat', username=name))
 
 
+# message deleting
 @app.route('/delmes/<text>/<auth>/<get>')
 def delmes(text, auth, get):
     if not 'userName' in session:
@@ -461,7 +507,7 @@ def delmes(text, auth, get):
 
 
 
-
+# message with image deleting
 @app.route('/delimg/<auth>/<get>/<key>')
 def delimg(auth, get, key):
     if not 'userName' in session:
@@ -478,7 +524,7 @@ def delimg(auth, get, key):
 
 
 
-
+# deleting user from a group
 @app.route('/delus/<gname>',  methods=['POST', 'GET'])
 def delus(gname):
     if not 'userName' in session:
@@ -505,7 +551,7 @@ def delus(gname):
 
 
 
-
+# group deleting
 @app.route('/delgroup/<gname>',  methods=['POST', 'GET'])
 def delgroup(gname):
     if not 'userName' in session:
@@ -528,7 +574,7 @@ def delgroup(gname):
 
 
 
-
+# incorrect url handler
 @app.errorhandler(404)  # обработчик неверного URL
 def pagenotfound(error):
     return render_template('error.html')
