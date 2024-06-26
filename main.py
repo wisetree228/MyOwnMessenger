@@ -199,7 +199,7 @@ def login():
                 flash("That account doesn't exist!")
             else:
                 user=executeOne(f"SELECT * FROM users WHERE username='{username}'")
-                if user[2]!=password:
+                if user[1]!=password:
                     flash('Incorrect password!!')
                 else:
                     session['userName']=username
