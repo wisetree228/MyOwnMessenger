@@ -199,11 +199,11 @@ def login():
                 flash("That account doesn't exist!")
             else:
                 user=executeOne(f"SELECT * FROM users WHERE username='{username}'")
-                if user[2]!=password:
-                    flash('Incorrect password!!')
-                else:
-                    session['userName']=username
+                if str(user[1])==str(password):
+                    session['userName'] = username
                     return redirect(url_for('index'))
+                else:
+                    flash('Incorrect password!!')
         else:
             flash("The length of the login and password is at least 5 characters, it is forbidden to use ' in order to protect against sql injections!")
     return render_template('login.html')
